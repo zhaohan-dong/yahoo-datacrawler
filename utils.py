@@ -49,12 +49,13 @@ def get_exchange_tz(market: str) -> datetime.tzinfo:
 
 def market_open_close(df: pd.DataFrame, market: str = "US") -> pd.DataFrame:
     # Get exchange's timezone
-    exchange_tz = get_exchange_tz(market)
 
     if market == "US":
-        df["Market"] = df["Datetime"].dt.tz_localize(exchange_tz) \
-            .apply(lambda x: "Closed" if x.time() < datetime.time(hour=9, minute=30) or
-                                         x.time() > datetime.time(hour=16) else "Open")
+        if df["Datetime"].dt.tz != get_exchange_tz(market):
+            exchange_tz = get_exchange_tz(market)
+            df["Datetime"] = df["Datetime"].tz_convert(exchange_tz)
+        df["Market"] = df["Datetime"].apply(lambda x: "Closed" if x.time() < datetime.time(hour=9, minute=30) or
+                                                                x.time() > datetime.time(hour=16) else "Open")
     else:
         print("Market not supported yet.")
         df["Market"] = None
