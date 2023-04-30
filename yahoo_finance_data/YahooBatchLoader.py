@@ -49,7 +49,7 @@ class YahooBatchLoader:
 
         df = utils.pivot_price_df_by_ticker(df, tkrs)
 
-        df = utils.market_open_close(df, market="US")
+        df = utils.market_open_close(df, exchangeTimeZoneName="America/New_York")
 
         return df
 
@@ -59,7 +59,7 @@ class YahooBatchLoader:
         tickers_df = pd.DataFrame()
 
         for ticker in tkrs:
-            ticker_df = pd.DataFrame(quote.get_quote(ticker))
+            ticker_df = pd.DataFrame([quote.get_quote(ticker)])
             tickers_df = pd.concat([tickers_df, ticker_df])
 
         return tickers_df
