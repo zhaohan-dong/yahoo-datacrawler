@@ -1,2 +1,2 @@
-from .webull_client import WebullClient
-from .webull_client import *
+from .WebullClient import WebullClient
+from .WebullClient import *

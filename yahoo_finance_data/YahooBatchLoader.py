@@ -16,13 +16,15 @@ class YahooBatchLoader:
     def get_historical_prices(self, tickers: yf.Ticker | yf.Tickers | str | list[str],
                    start: Any = None,
                    end: Any = None,
-                   period: str = "7d",
+                   period: str = "5d",
                    interval: str = "1m",
                    prepost: bool = True,
                    keepna: bool = False) -> pd.DataFrame:
         """
          Method to load previous trading session's data
          (Should run after 8pm Eastern Time / end of post-market session)
+
+         Note: start/end parameters are broken for the moment
         :param start: Start date for historical data query
         :param end: End date for historical data query
         :param period: Period of query, default to 5 days (can be set to max in conjunction with start/end)
