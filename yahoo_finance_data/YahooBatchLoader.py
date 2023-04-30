@@ -5,9 +5,10 @@ import yfinance as yf
 import pandas as pd
 import datetime
 from . import utils
+from . import quote
 
 
-class YahooDataLoader:
+class YahooBatchLoader:
     __tickers: list[str]
 
     def __init__(self, tickers: list[str]):
@@ -60,10 +61,8 @@ class YahooDataLoader:
         return df
 
     def last_price(self):
-        for ticker in self.__tickers:
-            pass
-
-
+        tickers = yf.Tickers(self.__tickers)
+        print(tickers.tickers.info)
 
     # Get options data for all available future dates at the moment
     def options_data(self) -> pd.DataFrame:
@@ -73,8 +72,11 @@ class YahooDataLoader:
         for ticker in self.__tickers:
 
             ticker_options_df = pd.DataFrame()
+
+            # Get a list of expiration dates
             expiration_dates = yf.Ticker(ticker).options
 
+            # yfinance does not provide a way to get all expiration date options price, so we have to query one by one
             for expiration_date in expiration_dates:
                 option_chain = yf.Ticker(ticker).option_chain(
                     date=expiration_date)  # get the option chain for the ticker
@@ -82,7 +84,7 @@ class YahooDataLoader:
                 put_options = option_chain.puts  # get put options data
                 ticker_options_df = pd.concat(
                     [ticker_options_df, call_options, put_options])  # concatenate call and put options data
-                ticker_options_df["accessTime"] = datetime.datetime.now(tz=pytz.timezone("America/New_York"))
+                ticker_options_df["accessTime"] = datetime.datetime.now(tz=pytz.UTC)
                 ticker_options_df["ticker"] = ticker
 
             options_df = pd.concat([options_df, ticker_options_df])
