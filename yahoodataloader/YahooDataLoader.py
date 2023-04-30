@@ -1,9 +1,10 @@
 # Wrapper class to download data from Yahoo Finance using yfinance package
+from typing import Any
 import pytz
 import yfinance as yf
 import pandas as pd
 import datetime
-import utils
+from . import utils
 
 
 class YahooDataLoader:
@@ -12,16 +13,17 @@ class YahooDataLoader:
     def __init__(self, tickers: list[str]):
         self.__tickers = tickers
 
-    def set_tickers(self, tickers: list[str]):
+    def set_tickers(self, tickers: list[str]) -> None:
         self.__tickers = tickers
+        return None
 
-    def get_tickers(self):
+    def get_tickers(self) -> list[str]:
         return self.__tickers
 
     def get_prices(self,
-                   start: str = None,
-                   end: str = None,
-                   period: str = "5d",
+                   start: Any = None,
+                   end: Any = None,
+                   period: str = "max",
                    interval: str = "1m",
                    prepost: bool = True,
                    keepna: bool = False) -> pd.DataFrame:
@@ -49,14 +51,22 @@ class YahooDataLoader:
                          group_by="ticker",
                          keepna=keepna)
 
-        df = utils.pivot_price_df_by_ticker(df)
+        df = utils.rename_index_datetime(df)
 
-        df = utils.market_open_close(df)
+        df = utils.pivot_price_df_by_ticker(df, self.__tickers)
+
+        df = utils.market_open_close(df, market="US")
 
         return df
 
+    def last_price(self):
+        for ticker in self.__tickers:
+            pass
+
+
+
     # Get options data for all available future dates at the moment
-    def options_data(self):
+    def options_data(self) -> pd.DataFrame:
 
         options_df = pd.DataFrame()  # create an empty DataFrame to store options data
 
