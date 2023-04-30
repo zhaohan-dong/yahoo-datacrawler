@@ -2,9 +2,9 @@ import pandas as pd
 import os
 import datetime
 
-def df_to_parquet(df: pd.DataFrame, root_dir: str, filename: str=None, engine: str = "pyarrow", compression: str = "gzip") -> None:
+def df_to_parquet(df: pd.DataFrame, root_dir: str, filepath: str=None, engine: str = "pyarrow", compression: str = "gzip") -> None:
     # If no filename is given, we'll store parquet files in a directory tree with individual ticker/date
-    if filename == None:
+    if filepath == None:
         dates = df["Datetime"].dt.date.unique()
         tickers = df["Ticker"].unique()
         for ticker in tickers:
@@ -14,9 +14,9 @@ def df_to_parquet(df: pd.DataFrame, root_dir: str, filename: str=None, engine: s
                 write_df = df.loc[(df["Ticker"]==ticker) & (df["Datetime"].dt.date==date), :]
                 write_df.to_parquet(path=os.path.join(root_dir, ticker, f"{ticker}-{date}.parquet"), engine=engine, compression=compression)
     else:
-        df.to_parquet(path=os.path.join(root_dir, filename), engine=engine, compression=compression)
+        df.to_parquet(path=filepath, engine=engine, compression=compression)
 
-def read_parquet(root_dir: str, tickers: str=None, start: str=None, end: str=None, filename: str=None, engine: str="pyarrow") -> pd.DataFrame:
+def read_parquet(root_dir: str=None, filepath: str=None, tickers: str=None, start: str=None, end: str=None, engine: str="pyarrow") -> pd.DataFrame:
 
     def get_files_within_date_range(directory_path, start=None, end=None) -> list[str]:
         filenames = [file for file in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, file))]
@@ -40,7 +40,7 @@ def read_parquet(root_dir: str, tickers: str=None, start: str=None, end: str=Non
     output_df = pd.DataFrame()
 
     # Read tickers
-    if filename==None:
+    if not filepath and root_dir:
         if tickers==None:
             tickers = [ticker for ticker in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, ticker))]
 
@@ -54,7 +54,9 @@ def read_parquet(root_dir: str, tickers: str=None, start: str=None, end: str=Non
                                        pd.read_parquet(path=file,
                                                        engine=engine,
                                                        dtype_backend="pyarrow")])
+    elif filepath and not root_dir:
+        output_df = pd.read_parquet(path=filepath)
     else:
-        output_df = pd.read_parquet(path=os.path.join(root_dir, filename))
+        print("Please provide either a root directory to saved files, or a filename to read.")
 
     return output_df
