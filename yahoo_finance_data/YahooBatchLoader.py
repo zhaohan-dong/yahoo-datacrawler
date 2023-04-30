@@ -1,6 +1,7 @@
 # Wrapper class to download data from Yahoo Finance using yfinance package
 from typing import Any
 import pytz
+import yfinance
 import yfinance as yf
 import pandas as pd
 import datetime
@@ -9,24 +10,13 @@ from . import quote
 
 
 class YahooBatchLoader:
+    def __repr__(self):
+        return 'yahoo_finance_data.YahooBatchLoader object'
 
-    __tickers: list[str]
-    __prices: pd.DataFrame
-
-    def __init__(self, tickers: list[str]):
-        self.__tickers = tickers
-
-    def set_tickers(self, tickers: list[str]) -> None:
-        self.__tickers = tickers
-        return None
-
-    def get_tickers(self) -> list[str]:
-        return self.__tickers
-
-    def get_prices(self,
+    def get_historical_prices(self, tickers: yf.Ticker | yf.Tickers | str | list[str],
                    start: Any = None,
                    end: Any = None,
-                   period: str = "max",
+                   period: str = "7d",
                    interval: str = "1m",
                    prepost: bool = True,
                    keepna: bool = False) -> pd.DataFrame:
@@ -41,9 +31,10 @@ class YahooBatchLoader:
         :param keepna: Keep NA entries
         :return: A pandas dataframe of prices
         """
+        tkrs = utils.parse_ticker_to_str_list(tickers)
 
         # Download ticker data from yahoo
-        df = yf.download(tickers=self.__tickers,
+        df = yf.download(tickers=tkrs,
                          start=start,
                          end=end,
                          period=period,
@@ -56,24 +47,31 @@ class YahooBatchLoader:
 
         df = utils.rename_index_datetime(df)
 
-        df = utils.pivot_price_df_by_ticker(df, self.__tickers)
+        df = utils.pivot_price_df_by_ticker(df, tkrs)
 
         df = utils.market_open_close(df, market="US")
 
-        self.__prices = df
-
         return df
 
-    def last_price(self):
-        tickers = yf.Tickers(self.__tickers)
-        print(tickers.tickers.info)
+    def get_prices(self, tickers: yf.Ticker | yf.Tickers | str | list[str]) -> pd.DataFrame:
+
+        tkrs = utils.parse_ticker_to_str_list(tickers)
+        tickers_df = pd.DataFrame()
+
+        for ticker in tkrs:
+            ticker_df = pd.DataFrame(quote.get_quote(ticker))
+            tickers_df = pd.concat([tickers_df, ticker_df])
+
+        return tickers_df
 
     # Get options data for all available future dates at the moment
-    def options_data(self) -> pd.DataFrame:
+    def options_data(self, tickers: yf.Ticker | yf.Tickers | str | list[str]) -> pd.DataFrame:
+
+        tkrs = utils.parse_ticker_to_str_list(tickers)
 
         options_df = pd.DataFrame()  # create an empty DataFrame to store options data
 
-        for ticker in self.__tickers:
+        for ticker in tkrs:
 
             ticker_options_df = pd.DataFrame()
 
@@ -95,6 +93,3 @@ class YahooBatchLoader:
 
         return options_df
 
-    def price_to_parquet(self, path: str, engine: str="pyarrow", compression: str="gzip"):
-        self.__prices.to_parquet(path=path, engine=engine, compression=compression)
-        return None

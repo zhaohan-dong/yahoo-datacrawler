@@ -10,11 +10,12 @@ Added functions:
 from webull import paper_webull, webull
 import gnupg
 import json
+import datetime
 import os
 
-ENVIRONMENT = paper_webull
+ENV = "paper"
 
-class WebullClient(ENVIRONMENT):
+class WebullClient(webull if ENV == "real" else paper_webull):
 
     def __init__(self, credential_path,
                  gnupghome=f"{os.path.expanduser('~')}/.gnupg"):
@@ -83,5 +84,22 @@ class WebullClient(ENVIRONMENT):
             print(f"Server response: {res}")
             login_retry_count += 1
 
-    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0, outsideRegularTradingHour=True, stpPrice=None, trial_value=0, trial_type='DOLLAR'):
-        strategy.buy(self)
+    def place_order(self, stock=None, tId=None, price=0, action='BUY', orderType='LMT', enforce='GTC', quant=0,
+                    outsideRegularTradingHour=True, stpPrice=None, trial_value=0, trial_type='DOLLAR'):
+        pass
+
+    def get_quote(self, stock=None, tId=None) -> dict:
+        """
+        Override original package function to conform to yahoo finance's result
+        :param stock:
+        :param tId:
+        :return:
+        """
+        quote = super().get_quote(stock=stock, tId=tId)
+        return {"ticker": quote["symbol"],
+                "price": quote["pPrice"],
+                "bid": quote["bidList"][0]["price"],
+                "ask": quote["askList"][0]["price"],
+                "bidSize": quote["bidList"][0]["volume"],
+                "askSize": quote["askList"][0]["volume"],
+                "accessTime": datetime.datetime.now(tz=datetime.timezone.utc)}

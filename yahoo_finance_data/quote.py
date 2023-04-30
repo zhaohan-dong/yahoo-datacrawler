@@ -1,8 +1,9 @@
 import yfinance as yf
 import datetime
+import pandas as pd
 
 
-def quote(ticker: str):
+def get_quote(ticker: str) -> dict:
     """
     Given a ticker, return last quote
     :param ticker: Ticker
@@ -12,6 +13,18 @@ def quote(ticker: str):
     info = stock.info
 
     if info["marketState"] == "Closed":
-        return info["postMarketPrice"], info["bid"], info["ask"], info["bidSize"], info["askSize"], datetime.datetime.now(tz=datetime.timezone.utc)
+        return {"ticker": ticker,
+                "price": info["postMarketPrice"],
+                "bid": info["bid"],
+                "ask": info["ask"],
+                "bidSize": info["bidSize"],
+                "askSizes": info["askSize"],
+                "accessTime": datetime.datetime.now(tz=datetime.timezone.utc)}
 
-    return info["regularMarketPrice"], info["bid"], info["ask"], info["bidSize"], info["askSize"], datetime.datetime.now(tz=datetime.timezone.utc)
+    return {"ticker": ticker,
+            "price": info["regularMarketPrice"],
+            "bid": info["bid"],
+            "ask": info["ask"],
+            "bidSize": info["bidSize"],
+            "askSizes": info["askSize"],
+            "accessTime": datetime.datetime.now(tz=datetime.timezone.utc)}
