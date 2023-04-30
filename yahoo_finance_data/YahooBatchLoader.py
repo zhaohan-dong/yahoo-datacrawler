@@ -9,7 +9,9 @@ from . import quote
 
 
 class YahooBatchLoader:
+
     __tickers: list[str]
+    __prices: pd.DataFrame
 
     def __init__(self, tickers: list[str]):
         self.__tickers = tickers
@@ -58,6 +60,8 @@ class YahooBatchLoader:
 
         df = utils.market_open_close(df, market="US")
 
+        self.__prices = df
+
         return df
 
     def last_price(self):
@@ -90,3 +94,7 @@ class YahooBatchLoader:
             options_df = pd.concat([options_df, ticker_options_df])
 
         return options_df
+
+    def price_to_parquet(self, path: str, engine: str="pyarrow", compression: str="gzip"):
+        self.__prices.to_parquet(path=path, engine=engine, compression=compression)
+        return None
