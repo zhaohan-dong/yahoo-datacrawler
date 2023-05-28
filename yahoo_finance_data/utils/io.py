@@ -2,7 +2,16 @@ import pandas as pd
 import os
 import datetime
 
-def df_to_parquet(df: pd.DataFrame, root_dir: str, filepath: str=None, engine: str = "pyarrow", compression: str = "gzip") -> None:
+def to_parquet(df: pd.DataFrame, root_dir: str, filepath: str=None, engine: str = "pyarrow", compression: str = "gzip") -> None:
+    """
+    Save dataframe to parquet files
+    :param df: Dataframe to save
+    :param root_dir: Root directory to save sub-folders with stock tickers
+    :param filepath: (Optional) Path to save all files
+    :param engine: Engine to save the file, default to pyarrow which is faster.
+    :param compression: Compression algorithm
+    :return: None
+    """
     # If no filename is given, we'll store parquet files in a directory tree with individual ticker/date
     if filepath == None:
         dates = df["Datetime"].dt.date.unique()
@@ -16,8 +25,17 @@ def df_to_parquet(df: pd.DataFrame, root_dir: str, filepath: str=None, engine: s
     else:
         df.to_parquet(path=filepath, engine=engine, compression=compression)
 
-def read_parquet(root_dir: str=None, filepath: str=None, tickers: str=None, start: str=None, end: str=None, engine: str="pyarrow") -> pd.DataFrame:
-
+def read_parquet(root_dir: str=None, filepath: str=None, tickers: str|list[str]=None, start: str=None, end: str=None, engine: str="pyarrow") -> pd.DataFrame:
+    """
+    Read price data from parquet and load into a pandas dataframe
+    :param root_dir: Root directory containing all stock ticker sub-folders
+    :param filepath: (Optional) Filepath to saved file
+    :param tickers: Select only from the list of tickers
+    :param start: Start time
+    :param end: End time
+    :param engine: Engine to load into, default to pyarrow
+    :return: Pandas dataframe
+    """
     def get_files_within_date_range(directory_path, start=None, end=None) -> list[str]:
         filenames = [file for file in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, file))]
 
