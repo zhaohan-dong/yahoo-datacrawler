@@ -7,7 +7,7 @@ def to_parquet(df: pd.DataFrame, root_dir: str, filepath: str=None, engine: str 
     Save dataframe to parquet files
     :param df: Dataframe to save
     :param root_dir: Root directory to save sub-folders with stock tickers
-    :param filepath: (Optional) Path to save all files
+    :param filepath: (Optional) Filepath to save all data into one parquet file
     :param engine: Engine to save the file, default to pyarrow which is faster.
     :param compression: Compression algorithm
     :return: None
@@ -29,7 +29,7 @@ def read_parquet(root_dir: str=None, filepath: str=None, tickers: str|list[str]=
     """
     Read price data from parquet and load into a pandas dataframe
     :param root_dir: Root directory containing all stock ticker sub-folders
-    :param filepath: (Optional) Filepath to saved file
+    :param filepath: (Optional) Filepath to one parquet file to read from
     :param tickers: Select only from the list of tickers
     :param start: Start time
     :param end: End time
@@ -59,12 +59,13 @@ def read_parquet(root_dir: str=None, filepath: str=None, tickers: str|list[str]=
 
     # Read tickers
     if not filepath and root_dir:
+        # Read all tickers
         if tickers==None:
             tickers = [ticker for ticker in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, ticker))]
-
-        for ticker in tickers:
+        # Read one ticker if only one is passed
+        elif isinstance(tickers, str):
             # Get a list of filenames for the ticker within the given daterange
-            files = get_files_within_date_range(directory_path=os.path.join(root_dir, ticker), start=start, end=end)
+            files = get_files_within_date_range(directory_path=os.path.join(root_dir, tickers), start=start, end=end)
 
             # Join the files
             for file in files:
@@ -72,9 +73,26 @@ def read_parquet(root_dir: str=None, filepath: str=None, tickers: str|list[str]=
                                        pd.read_parquet(path=file,
                                                        engine=engine,
                                                        dtype_backend="pyarrow")])
+        # Else if tickers is a list of tickers
+        elif isinstance(tickers, list):
+            for ticker in tickers:
+                # Get a list of filenames for the ticker within the given daterange
+                files = get_files_within_date_range(directory_path=os.path.join(root_dir, ticker), start=start, end=end)
+
+                # Join the files
+                for file in files:
+                    output_df = pd.concat([output_df,
+                                           pd.read_parquet(path=file,
+                                                           engine=engine,
+                                                           dtype_backend="pyarrow")])
+    # Read the parquet file if a filepath is provided
     elif filepath and not root_dir:
         output_df = pd.read_parquet(path=filepath)
     else:
         print("Please provide either a root directory to saved files, or a filename to read.")
+
+    # Sort the output dataframe
+    if not output_df.empty:
+        output_df.sort_values(["Ticker", "Datetime"], inplace=True)
 
     return output_df
