@@ -1,3 +1,4 @@
-/.idea/
+.idea/
 /venv/
-/finance-crawler.iml
+/*.iml
+.DS_Store
