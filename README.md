@@ -1,10 +1,12 @@
-# Yahoo Finance/Webull Package for Intraday data/Trading
+# Yahoo Finance/Webull Package
 
 Note: work in progress.
 
 This repo has two modules:
 - yahoo_finance_data
 - webull_client
+
+It also includes `finance-dashboard` directory, which is for plotting price data using Plotly.
 
 `yahoo_finance_data` extends `yfinance` package and make it easier to get multiple-ticker intraday price data.
 It also provides the ability to store data in the parquet format with the following structure.
@@ -25,3 +27,4 @@ It also provides the ability to store data in the parquet format with the follow
 ```
 `webull_client` extends `webull`. It makes it easier to authenticate user and create more complex orders currently
 not supported by Webull, such as immediate or cancel. However it might not be possible to place hidden or all or none orders.
+
